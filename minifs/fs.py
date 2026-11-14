@@ -10,6 +10,8 @@ from typing import List
 
 from .bitmap import Bitmap
 from .disk import VirtualDisk
+from .errors import DuplicateNameError, InvalidDiskError, NoFreeInodeError
+from .inode import MAX_FILE_ID, Inode, InodeTable, validate_name
 from .layout import DEFAULT_BLOCK_SIZE, DEFAULT_INODE_COUNT, Layout, compute_layout
 from .superblock import SUPERBLOCK_SIZE, Superblock
 
@@ -52,6 +54,10 @@ class FileInfo:
     blocks: List[int] = field(default_factory=list)
 
 
+def _file_info(inode: Inode) -> FileInfo:
+    return FileInfo(inode.file_id, inode.name, inode.size, inode.blocks.copy())
+
+
 class MiniFS:
     """Sistema de arquivos montado sobre um disco virtual."""
 
@@ -59,6 +65,9 @@ class MiniFS:
         self.disk = disk
         self.superblock = superblock
         self.bitmap = bitmap
+        self.inodes = InodeTable.load(disk, self.layout)
+        for inode in self.inodes.iter_used():
+            self._check_inode_blocks(inode)
 
     @property
     def layout(self) -> Layout:
@@ -77,26 +86,28 @@ class MiniFS:
         try:
             bitmap = Bitmap.create(disk, layout)
             superblock = Superblock.new(layout).with_mount()
+            fs = cls(disk, superblock, bitmap)
             disk.write_block(0, superblock.pack())
             disk.sync()
+            return fs
         except BaseException:
             disk.close()
             raise
-        return cls(disk, superblock, bitmap)
 
     @classmethod
     def mount(cls, path: str) -> "MiniFS":
-        """Abre um disco existente: lê o superblock, abre o disco e carrega o bitmap."""
+        """Abre um disco existente, carregando o superblock, o bitmap e os inodes."""
         superblock = Superblock.unpack(VirtualDisk.read_header(path, SUPERBLOCK_SIZE))
         disk = VirtualDisk.open(path, superblock.block_size, superblock.total_blocks)
         try:
             bitmap = Bitmap.load(disk, superblock.layout)
             superblock = superblock.with_mount()
+            fs = cls(disk, superblock, bitmap)
             disk.write_block(0, superblock.pack())
+            return fs
         except BaseException:
             disk.close()
             raise
-        return cls(disk, superblock, bitmap)
 
     def close(self) -> None:
         self.disk.close()
@@ -120,19 +131,40 @@ class MiniFS:
 
     def create(self, name: str) -> FileInfo:
         """Cria um arquivo vazio. Erros: InvalidNameError, DuplicateNameError, NoFreeInodeError."""
-        raise NotImplementedError("create: responsabilidade do Integrante 2")
+        validate_name(name)
+        if self.inodes.find(name) is not None:
+            raise DuplicateNameError(f"já existe um arquivo com o nome {name!r}")
+        slot = self.inodes.find_free()
+        if slot is None:
+            raise NoFreeInodeError("tabela de inodes cheia")
+        if self.inodes.last_file_id == MAX_FILE_ID:
+            raise NoFreeInodeError("limite de identificadores de arquivos atingido")
+        inode = Inode(slot.index, used=True, file_id=self.inodes.last_file_id + 1, name=name)
+        self.inodes.save(inode)
+        return _file_info(inode)
 
     def rm(self, name: str) -> None:
         """Remove o arquivo e libera seus blocos no bitmap. Erros: NoSuchFileError."""
-        raise NotImplementedError("rm: responsabilidade do Integrante 2")
+        inode = self.inodes.require(name)
+        self._check_inode_blocks(inode)
+        self.inodes.save(Inode(inode.index, file_id=inode.file_id))
+        if inode.blocks:
+            # Persiste a remoção antes de permitir que o bitmap reutilize os blocos.
+            self.disk.sync()
+            self.bitmap.free(inode.blocks)
+
+    def _check_inode_blocks(self, inode: Inode) -> None:
+        for block in inode.blocks:
+            if self.bitmap.is_free(block):
+                raise InvalidDiskError(f"inode {inode.index}: bloco {block} marcado como livre")
 
     def stat(self, name: str) -> FileInfo:
         """Metadados do arquivo. Erros: NoSuchFileError."""
-        raise NotImplementedError("stat: responsabilidade do Integrante 2")
+        return _file_info(self.inodes.require(name))
 
     def ls(self) -> List[FileInfo]:
         """Lista os arquivos existentes."""
-        raise NotImplementedError("ls: responsabilidade do Integrante 2")
+        return [_file_info(inode) for inode in self.inodes.iter_used()]
 
     def write(self, name: str, data: bytes) -> FileInfo:
         """Substitui o conteúdo do arquivo.

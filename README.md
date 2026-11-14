@@ -40,10 +40,10 @@ python -m minifs < roteiro.txt
 | `bitmap [inicio] [fim]` | mapa de blocos livres e ocupados | Integrante 1 | concluído |
 | `dump <bloco> [bytes]` | depuração: hexdump de um bloco | Integrante 1 | concluído |
 | `dbg-alloc <n>`, `dbg-free <b...>` | depuração: aloca/libera direto no bitmap | Integrante 1 | concluído |
-| `create <nome>` | cria arquivo vazio | Integrante 2 | pendente |
-| `ls` | lista arquivos | Integrante 2 | pendente |
-| `stat <nome>` | metadados do arquivo | Integrante 2 | pendente |
-| `rm <nome>` | remove arquivo e libera os blocos | Integrante 2 | pendente |
+| `create <nome>` | cria arquivo vazio | Integrante 2 | concluído |
+| `ls` | lista arquivos | Integrante 2 | concluído |
+| `stat <nome>` | metadados do arquivo | Integrante 2 | concluído |
+| `rm <nome>` | remove arquivo e libera os blocos | Integrante 2 | concluído |
 | `write <nome> "conteudo"` | grava conteúdo | Integrante 3 | pendente |
 | `read <nome>` | lê conteúdo | Integrante 3 | pendente |
 | `help`, `exit` | ajuda e encerramento | Integrante 3 | versão básica |
@@ -60,9 +60,8 @@ Devem ser usados somente em discos de teste.
 python -m unittest discover -s tests -t . -v
 ```
 
-Cobrem layout, disco virtual, superblock (incluindo detecção de corrupção), bitmap (first-fit,
-reutilização de blocos liberados, disco cheio, liberação duplicada), persistência entre montagens e
-entre processos, e a CLI.
+Cobrem layout, disco virtual, superblock, bitmap, operações de metadados e CLI. Verificam a
+persistência entre processos, a reutilização de inodes e a liberação de blocos pelo `rm`.
 
 ## Estrutura
 
@@ -73,6 +72,7 @@ minifs/
   disk.py        VirtualDisk: leitura e escrita de blocos no arquivo hospedeiro
   superblock.py  Superblock: serialização e validação do bloco 0
   bitmap.py      Bitmap: blocos livres/ocupados e alocador first-fit
+  inode.py       Inode e InodeTable: registros e referências aos blocos dos arquivos
   fs.py          MiniFS: format, mount, df e operações de arquivo
   cli.py         Shell: interface de comandos
 tests/           testes automatizados (unittest)
@@ -80,7 +80,9 @@ docs/
   LAYOUT_DISCO.md                  especificação do formato em disco
   INTERFACES.md                    contrato entre módulos e guia para os Integrantes 2 e 3
   relatorio/integrante1.md         seção do relatório: disco, superblock e bitmap
+  relatorio/integrante2.md         seção do relatório: inodes e operações de metadados
   video/roteiro_integrante1.md     roteiro da parte do Integrante 1 no vídeo
+  video/roteiro_integrante2.md     roteiro da parte do Integrante 2 no vídeo
 ```
 
 ## Divisão do trabalho
@@ -88,7 +90,7 @@ docs/
 | Integrante | Responsabilidade | Situação |
 |---|---|---|
 | 1 | Disco virtual, superblock e bitmap de blocos | concluído |
-| 2 | Metadados dos arquivos, referências aos blocos e create/rm/stat/ls | pendente |
+| 2 | Metadados dos arquivos, referências aos blocos e create/rm/stat/ls | concluído |
 | 3 | Interface de comandos, read/write, integração e testes | pendente |
 
-Os Integrantes 2 e 3 devem começar por [docs/INTERFACES.md](docs/INTERFACES.md).
+O contrato de integração está em [docs/INTERFACES.md](docs/INTERFACES.md).

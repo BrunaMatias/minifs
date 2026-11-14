@@ -79,14 +79,28 @@ class ShellTest(TempDirTestCase):
         self.assertFalse(ok)
         self.assertIn("disco cheio", out)
 
-    def test_comando_pendente_informa_responsavel(self):
-        self.run_line("format 100")
-        ok, out = self.run_line("create a.txt")
-        self.assertFalse(ok)
-        self.assertIn("Integrante 2", out)
-
 
 class CliProcessTest(TempDirTestCase):
+    def test_metadados_persistem_entre_processos(self):
+        self.assertEqual(run_cli(self.disk_path, "format", "100").returncode, 0)
+        created = run_cli(self.disk_path, "create", "dados.txt")
+        self.assertEqual(created.returncode, 0, created.stdout)
+
+        duplicate = run_cli(self.disk_path, "create", "dados.txt")
+        self.assertEqual(duplicate.returncode, 1)
+        self.assertIn("já existe", duplicate.stdout)
+        self.assertIn("dados.txt", run_cli(self.disk_path, "ls").stdout)
+
+        stat = run_cli(self.disk_path, "stat", "dados.txt")
+        self.assertEqual(stat.returncode, 0, stat.stdout)
+        self.assertIn("tamanho : 0 B", stat.stdout)
+        self.assertIn("blocos  : (nenhum)", stat.stdout)
+
+        removed = run_cli(self.disk_path, "rm", "dados.txt")
+        self.assertEqual(removed.returncode, 0, removed.stdout)
+        self.assertIn("(nenhum arquivo)", run_cli(self.disk_path, "ls").stdout)
+        self.assertEqual(run_cli(self.disk_path, "stat", "dados.txt").returncode, 1)
+
     def test_persistencia_entre_execucoes_do_programa(self):
         r = run_cli(self.disk_path, "format", "2048")
         self.assertEqual(r.returncode, 0, r.stderr)
