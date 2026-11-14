@@ -1,7 +1,8 @@
 # Especificação do formato em disco (MiniFS v1)
 
 Referência do formato binário, implementado em [minifs/layout.py](../minifs/layout.py),
-[minifs/superblock.py](../minifs/superblock.py) e [minifs/bitmap.py](../minifs/bitmap.py).
+[minifs/superblock.py](../minifs/superblock.py), [minifs/bitmap.py](../minifs/bitmap.py) e
+[minifs/inode.py](../minifs/inode.py).
 Qualquer mudança no formato deve atualizar este arquivo, as constantes de `layout.py` e a constante `VERSION`.
 
 Convenções: inteiros sem sinal em little-endian; blocos numerados a partir de 0; o bloco `b`
@@ -101,6 +102,9 @@ Formato definido em conjunto e implementado pelo Integrante 2. Struct Python:
   (`Layout.inode_location(i)`).
 - Tamanho máximo de arquivo: `20 x bs` (10 KiB com blocos de 512 B).
 - O format zera o disco inteiro, portanto todos os inodes começam com `used = 0`.
+- Ao remover um arquivo, o registro fica com `used = 0` e conserva `file_id`. Os demais campos
+  são zerados. Na montagem, o maior id encontrado na tabela, inclusive nos registros livres,
+  serve de base para o próximo id. Um novo arquivo pode usar o mesmo slot com um id maior.
 
 ## 6. Blocos de dados
 
