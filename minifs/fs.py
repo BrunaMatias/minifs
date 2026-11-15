@@ -10,7 +10,7 @@ from typing import List
 
 from .bitmap import Bitmap
 from .disk import VirtualDisk
-from .errors import DuplicateNameError, InvalidDiskError, NoFreeInodeError
+from .errors import DuplicateNameError, FileTooLargeError, InvalidDiskError, NoFreeInodeError
 from .inode import MAX_FILE_ID, Inode, InodeTable, validate_name
 from .layout import DEFAULT_BLOCK_SIZE, DEFAULT_INODE_COUNT, Layout, compute_layout
 from .superblock import SUPERBLOCK_SIZE, Superblock
@@ -171,8 +171,37 @@ class MiniFS:
 
         Erros: NoSuchFileError, FileTooLargeError, DiskFullError.
         """
-        raise NotImplementedError("write: responsabilidade do Integrante 3")
+        inode = self.inodes.require(name)
+        data = bytes(data)
+        bs = self.layout.block_size
+        if len(data) > self.layout.max_file_size:
+            raise FileTooLargeError(
+                f"arquivo {name!r} excede o limite de {self.layout.max_file_size} bytes"
+            )
+
+        need = (len(data) + bs - 1) // bs
+        old = inode.blocks
+        extra = self.bitmap.allocate(max(0, need - len(old)))
+        blocks = old[:need] + extra
+
+        try:
+            for i, block in enumerate(blocks):
+                self.disk.write_block(block, data[i * bs:(i + 1) * bs])
+            inode.size = len(data)
+            inode.blocks = blocks
+            self.inodes.save(inode)
+        except BaseException:
+            if extra:
+                try:
+                    self.bitmap.free(extra)
+                except Exception:
+                    pass
+            raise
+
+        self.bitmap.free(old[need:])
+        return self.stat(name)
 
     def read(self, name: str) -> bytes:
         """Conteúdo completo do arquivo. Erros: NoSuchFileError."""
-        raise NotImplementedError("read: responsabilidade do Integrante 3")
+        inode = self.inodes.require(name)
+        return b"".join(self.disk.read_block(block) for block in inode.blocks)[:inode.size]

@@ -44,12 +44,22 @@ python -m minifs < roteiro.txt
 | `ls` | lista arquivos | Integrante 2 | concluído |
 | `stat <nome>` | metadados do arquivo | Integrante 2 | concluído |
 | `rm <nome>` | remove arquivo e libera os blocos | Integrante 2 | concluído |
-| `write <nome> "conteudo"` | grava conteúdo | Integrante 3 | pendente |
-| `read <nome>` | lê conteúdo | Integrante 3 | pendente |
-| `help`, `exit` | ajuda e encerramento | Integrante 3 | versão básica |
+| `write <nome> "conteudo"` | grava conteúdo | Integrante 3 | concluído |
+| `read <nome>` | lê conteúdo | Integrante 3 | concluído |
+| `help`, `exit` | ajuda e encerramento | Integrante 3 | concluído |
 
-Os comandos pendentes já estão registrados na CLI e informam o integrante responsável até serem
-implementados.
+A parte do Integrante 3 inclui a escrita e leitura de arquivos em blocos de dados, o controle de
+limite de tamanho por inode e a integração da CLI com a fachada `MiniFS`.
+
+### Operações de leitura e escrita
+
+O comando `write` valida o nome do arquivo, rejeita conteúdos acima do limite do sistema
+(`max_file_size = 20 x tamanho_do_bloco`), aloca blocos extras quando necessário e reaproveita
+blocos livres após reduzir o tamanho do arquivo. O comando `read` recupera o conteúdo armazenado
+em disco e devolve apenas os bytes do arquivo, respeitando `size` do inode.
+
+A CLI aceita tanto execução em modo interativo quanto por script via `stdin` e comandos únicos por
+linha de comando. O comando `help` lista operações disponíveis e `exit` encerra o shell.
 
 Os comandos `dbg-alloc` e `dbg-free` alteram apenas o bitmap, sem inode associado aos blocos.
 Devem ser usados somente em discos de teste.
@@ -91,6 +101,6 @@ docs/
 |---|---|---|
 | 1 | Disco virtual, superblock e bitmap de blocos | concluído |
 | 2 | Metadados dos arquivos, referências aos blocos e create/rm/stat/ls | concluído |
-| 3 | Interface de comandos, read/write, integração e testes | pendente |
+| 3 | Interface de comandos, read/write, integração e testes | concluído |
 
 O contrato de integração está em [docs/INTERFACES.md](docs/INTERFACES.md).
