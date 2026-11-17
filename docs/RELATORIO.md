@@ -1,5 +1,7 @@
 # MiniFS: sistema de arquivos simplificado
 
+**Integrantes:** Bruna Matias de Lima, Luiz Felipe Ferreira de Franca e Thales Guedes Tirapani
+
 Relatório do trabalho prático de Sistemas Operacionais (UFSCar). Referência conceitual:
 Tanenbaum, *Sistemas Operacionais Modernos*, capítulos sobre sistemas de arquivos e gerenciamento
 de espaço em disco. A especificação byte a byte do formato está em [LAYOUT_DISCO.md](LAYOUT_DISCO.md).
@@ -178,9 +180,9 @@ O roteiro da demonstração em vídeo exercita, de ponta a ponta, `format`, `cre
 
 | Integrante | Responsabilidade |
 |---|---|
-| 1 | disco virtual, layout, superblock e bitmap de blocos |
-| 2 | inodes, referências aos blocos e `create`/`rm`/`stat`/`ls` |
-| 3 | `write`/`read`, interface de comandos, integração e testes |
+| 1. Bruna Matias de Lima | disco virtual, layout, superblock e bitmap de blocos |
+| 2. Thales Guedes Tirapani | inodes, referências aos blocos e `create`/`rm`/`stat`/`ls` |
+| 3. Luiz Felipe Ferreira de Franca | `write`/`read`, interface de comandos, integração e testes |
 
 Todos participaram da definição do formato em disco e das interfaces entre os módulos
 ([INTERFACES.md](INTERFACES.md)).
