@@ -4,6 +4,9 @@ Relatório do trabalho prático de Sistemas Operacionais (UFSCar). Referência c
 Tanenbaum, *Sistemas Operacionais Modernos*, capítulos sobre sistemas de arquivos e gerenciamento
 de espaço em disco. A especificação byte a byte do formato está em [LAYOUT_DISCO.md](LAYOUT_DISCO.md).
 
+- **Código-fonte:** [https://github.com/BrunaMatias/minifs](https://github.com/BrunaMatias/minifs)
+- **Vídeo (mini seminário):** [Google Drive](https://drive.google.com/file/d/1HjhB5eEhnndOvqoqA83d3otkhtYOteyP/view?usp=sharing)
+
 ## 1. Visão geral
 
 O MiniFS é escrito em Python 3, sem bibliotecas externas, e funciona dentro de um único arquivo
